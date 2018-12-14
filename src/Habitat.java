@@ -1,19 +1,20 @@
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
+import javax.swing.*;
 import java.applet.Applet;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import java.util.regex.Pattern;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.regex.Pattern;
 
 public class Habitat extends Applet{
 	
@@ -35,10 +36,25 @@ public class Habitat extends Applet{
 	private int n1 = rnd.nextInt(5) + 5;
 	private int n2 = rnd.nextInt(3) + 7;
 	private int k = rnd.nextInt(9) + 1;
-	private int p = rnd.nextInt(70) + 30;
+	private int p = rnd.nextInt(40) + 60;
 	private int speed = rnd.nextInt(10) + 10;
 	private int radius = rnd.nextInt(10) + 5;
-	
+	/*private DataInputStream dis = new DataInputStream(new InputStream() {
+		@Override
+		public int read() throws IOException {
+			return 0;
+		}
+	});
+	private DataOutputStream dos = new DataOutputStream(new OutputStream() {
+		@Override
+		public void write(int b) throws IOException {	}
+	});*/
+	private MyConsole console;
+	//private String cmd = null;
+	private String[] pars;
+    private String info1 = "";
+    private String info2 = "";
+
 	private class Task extends TimerTask {
 		private Habitat hbt;
 		private boolean first_rn = true;
@@ -101,7 +117,11 @@ public class Habitat extends Applet{
 					}
 						repaint(); 
 						break;
-					}
+				case KeyEvent.VK_C:
+					console = new MyConsole();
+					//console.run();
+					break;
+				}
 			}
 		};
 		this.addKeyListener(pk);
@@ -118,6 +138,7 @@ public class Habitat extends Applet{
 		int tim = (int)elapsed_tm;
 		float p1 = rnd.nextInt(100);
 		boolean bool = false;
+		String[] cmd2 = new String[2];
 		
 		
 		
@@ -134,7 +155,43 @@ public class Habitat extends Applet{
 			manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
 			manags_mp.put(manags.size(), time);
 		}
-		
+
+		/*try {
+			if(console != null)
+				if(dis.available() > 0) {
+                    cmd = dis.readUTF();
+                    pars = Parser(cmd);
+                    if (pars[pars.length - 1].equals("Lay")) {
+                        manags.clear();
+                        dos.writeUTF("Managers layed off");
+                    } else {
+                        cmd2 = pars[pars.length - 1].split(Pattern.quote(" "));
+                        for (int i = 0; i < Integer.parseInt(cmd2[1]); i++)
+                            manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
+                        dos.writeUTF("Managers hired");
+                    }
+                }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
+		if(console != null) {
+            info1 = console.getCurinfo();
+            if(!info1.equals(info2)) {
+                pars = Parser(info1);
+                if (pars[pars.length - 1].equals("Lay")) {
+                    manags.clear();
+                    console.addInfo("Managers layed off\n");
+                } else {
+                    cmd2 = pars[pars.length - 1].split(Pattern.quote(" "));
+                    for (int i = 0; i < Integer.parseInt(cmd2[1]); i++)
+                        manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
+                    console.addInfo("Managers hired\n");
+                }
+                info1 = console.getCurinfo();
+                info2 = info1;
+            }
+        }
+
 		this.repaint();
 		Toolkit.getDefaultToolkit().sync();
 	}
@@ -202,6 +259,13 @@ public class Habitat extends Applet{
 			offScreenGraphics.setColor(Color.BLUE);
 			offScreenGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 14));
 			offScreenGraphics.drawString(mcount, 15, 65);
+			/*try {
+				dos.writeUTF("End");
+				dos.close();
+				dis.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}*/
 			devs.clear();
 			manags.clear();
 		}
@@ -211,5 +275,9 @@ public class Habitat extends Applet{
 	public void update(Graphics g) {
 		paint(g);
 	}
+
+	private String[] Parser(String cmd) {
+	    return cmd.split(Pattern.quote("\n"));
+    }
 
 }
