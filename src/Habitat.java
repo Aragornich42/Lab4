@@ -39,18 +39,7 @@ public class Habitat extends Applet{
 	private int p = rnd.nextInt(40) + 60;
 	private int speed = rnd.nextInt(10) + 10;
 	private int radius = rnd.nextInt(10) + 5;
-	/*private DataInputStream dis = new DataInputStream(new InputStream() {
-		@Override
-		public int read() throws IOException {
-			return 0;
-		}
-	});
-	private DataOutputStream dos = new DataOutputStream(new OutputStream() {
-		@Override
-		public void write(int b) throws IOException {	}
-	});*/
 	private MyConsole console;
-	//private String cmd = null;
 	private String[] pars;
     private String info1 = "";
     private String info2 = "";
@@ -138,7 +127,7 @@ public class Habitat extends Applet{
 		int tim = (int)elapsed_tm;
 		float p1 = rnd.nextInt(100);
 		boolean bool = false;
-		String[] cmd2 = new String[2];
+		String[] cmd2;
 		
 		
 		
@@ -156,24 +145,6 @@ public class Habitat extends Applet{
 			manags_mp.put(manags.size(), time);
 		}
 
-		/*try {
-			if(console != null)
-				if(dis.available() > 0) {
-                    cmd = dis.readUTF();
-                    pars = Parser(cmd);
-                    if (pars[pars.length - 1].equals("Lay")) {
-                        manags.clear();
-                        dos.writeUTF("Managers layed off");
-                    } else {
-                        cmd2 = pars[pars.length - 1].split(Pattern.quote(" "));
-                        for (int i = 0; i < Integer.parseInt(cmd2[1]); i++)
-                            manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
-                        dos.writeUTF("Managers hired");
-                    }
-                }
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
 		if(console != null) {
             info1 = console.getCurinfo();
             if(!info1.equals(info2)) {
@@ -231,8 +202,6 @@ public class Habitat extends Applet{
 				if (dev.getX() < 1300) {
 					offScreenGraphics.drawImage(dev_img, dev.getX(),
 							dev.getY(), this);
-				} else {
-					//devs.remove(i);
 				}
 			}
 
@@ -242,8 +211,6 @@ public class Habitat extends Applet{
 				if (manag.getX() > 0) {
 					offScreenGraphics.drawImage(manag_img, manag.getX(),
 							manag.getY(), this);
-				} else {
-					//manags.remove(i);
 				}
 			}
 		} else {
@@ -259,13 +226,6 @@ public class Habitat extends Applet{
 			offScreenGraphics.setColor(Color.BLUE);
 			offScreenGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 14));
 			offScreenGraphics.drawString(mcount, 15, 65);
-			/*try {
-				dos.writeUTF("End");
-				dos.close();
-				dis.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}*/
 			devs.clear();
 			manags.clear();
 		}
