@@ -1,5 +1,6 @@
+import java.io.Serializable;
 
-abstract class Men {
+abstract class Men implements Serializable {
 	
 	int x;
 	int y;

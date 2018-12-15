@@ -1,6 +1,7 @@
+import java.io.Serializable;
 import java.util.Random;
 
-public class Developer extends Men implements IBehavior, Runnable {
+public class Developer extends Men implements IBehavior, Runnable, Serializable {
 	
 	private Random rnd = new Random();
 	private int direct = rnd.nextInt(8);

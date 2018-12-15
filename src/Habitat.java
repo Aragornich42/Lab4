@@ -39,17 +39,16 @@ public class Habitat extends Applet{
 	private String[] pars;
     private String info1 = "";
     private String info2 = "";
-    private File f = new File("config.txt");
-    private FileWriter fw = new FileWriter(f);
-    private File devSer = new File("dev.ser");
-    private File manSer = new File("man.ser");
-    private ObjectOutputStream oosdev = new ObjectOutputStream(new FileOutputStream(devSer));
-    private ObjectOutputStream oosman = new ObjectOutputStream(new FileOutputStream(manSer));
-    private ObjectInputStream oisdev;/* = new ObjectInputStream(new FileInputStream(devSer));*/
-    private ObjectInputStream oisman;/* = new ObjectInputStream(new FileInputStream(manSer));*/
+    private File f;
+    private FileWriter fw;
+    private File devSer;
+    private File manSer;
+    private ObjectOutputStream oosdev;
+    private ObjectOutputStream oosman;
+    private ObjectInputStream oisdev;
+    private ObjectInputStream oisman;
 	private JFileChooser jfc = new JFileChooser();
-    private Developer developer;
-    private Manager manager;
+    private JFrame frame = new JFrame();
 
 	private class Task extends TimerTask {
 		private Habitat hbt;
@@ -118,11 +117,15 @@ public class Habitat extends Applet{
 						break;
 					case KeyEvent.VK_Z:
 						try {
-							for(Developer dev : devs)
-								oosdev.writeObject(dev);
+							jfc.showOpenDialog(frame);
+							devSer = jfc.getSelectedFile();
+							oosdev = new ObjectOutputStream(new FileOutputStream(devSer));
+							oosdev.writeObject(devs);
 							oosdev.close();
-							for(Manager man : manags)
-								oosman.writeObject(man);
+							jfc.showOpenDialog(frame);
+							manSer = jfc.getSelectedFile();
+							oosman = new ObjectOutputStream(new FileOutputStream(manSer));
+							oosman.writeObject(manags);
 							oosdev.close();
 						} catch (IOException e1) {
 							e1.printStackTrace();
@@ -130,26 +133,24 @@ public class Habitat extends Applet{
 						break;
 					case KeyEvent.VK_X:
 						try {
-							JFrame frame = new JFrame();
 							jfc.showOpenDialog(frame);
 							oisdev = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
 							jfc.showOpenDialog(frame);
 							oisman = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
+							LinkedList<Developer> devs2 = (LinkedList<Developer>) oisdev.readObject();
+							LinkedList<Manager> mans2 = (LinkedList<Manager>) oisman.readObject();
+							for(Developer dev : devs2)
+								devs.add(dev);
+							oisdev.close();
+							for(Manager man : mans2)
+								manags.add(man);
+							oisman.close();
 						} catch (IOException e1) {
 							e1.printStackTrace();
-						}
-						try {
-							while(oisdev.available() > 0)
-								devs.add((Developer) oisdev.readObject());
-							oisdev.close();
-							while(oisman.available() > 0)
-								manags.add((Manager) oisman.readObject());
-							oisman.close();
-						} catch(IOException el) {
-							el.printStackTrace();
 						} catch (ClassNotFoundException e1) {
 							e1.printStackTrace();
 						}
+						break;
 				}
 			}
 		};
@@ -266,7 +267,10 @@ public class Habitat extends Applet{
 			offScreenGraphics.setColor(Color.BLUE);
 			offScreenGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 14));
 			offScreenGraphics.drawString(mcount, 15, 65);
+			jfc.showSaveDialog(frame);
+			f = jfc.getSelectedFile();
 			try {
+                fw = new FileWriter(f);
 				fw.write(str + "\n");
 				fw.write(dcount + "\n");
 				fw.write(mcount + "\n");
