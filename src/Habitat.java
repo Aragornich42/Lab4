@@ -1,5 +1,4 @@
 import javax.imageio.ImageIO;
-import javax.imageio.stream.FileImageInputStream;
 import javax.swing.*;
 import java.applet.Applet;
 import java.awt.*;
@@ -11,9 +10,6 @@ import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Pattern;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.regex.Pattern;
 
 public class Habitat extends Applet{
@@ -43,6 +39,17 @@ public class Habitat extends Applet{
 	private String[] pars;
     private String info1 = "";
     private String info2 = "";
+    private File f = new File("config.txt");
+    private FileWriter fw = new FileWriter(f);
+    private File devSer = new File("dev.ser");
+    private File manSer = new File("man.ser");
+    private ObjectOutputStream oosdev = new ObjectOutputStream(new FileOutputStream(devSer));
+    private ObjectOutputStream oosman = new ObjectOutputStream(new FileOutputStream(manSer));
+    private ObjectInputStream oisdev;/* = new ObjectInputStream(new FileInputStream(devSer));*/
+    private ObjectInputStream oisman;/* = new ObjectInputStream(new FileInputStream(manSer));*/
+	private JFileChooser jfc = new JFileChooser();
+    private Developer developer;
+    private Manager manager;
 
 	private class Task extends TimerTask {
 		private Habitat hbt;
@@ -70,46 +77,79 @@ public class Habitat extends Applet{
 	
 	private Task tsk = new Task(this);
 	
-	public Habitat() {
+	public Habitat() throws IOException {
 		KeyAdapter pk;
 		pk = new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				int keyCode = e.getKeyCode();
 				System.out.println(e);
 				switch(keyCode) {
-				case KeyEvent.VK_B:
-					timer.schedule(tsk, 0, 1000);
-					repaint(); 
-					break;
-				case KeyEvent.VK_E:
-					timer.cancel();
-					active = false;
-					for(int i = 1; i <= devs_mp.size(); i++) {
-						System.out.println("Разработчик "+ i +", время рождения: " + 
-								devs_mp.get(i));
-					}					
-					for(int i = 1; i <= manags_mp.size(); i++) {
-						System.out.println("Менеджер "+ i + ", время рождения: " + 
-								manags_mp.get(i));
-					}					
-					repaint(); 
-					break;
-				case KeyEvent.VK_T:
-					timerhidden = !timerhidden;
-					repaint();
-					break;
-				case KeyEvent.VK_S:
-					try {
-						Thread.sleep(5000);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-						repaint(); 
+					case KeyEvent.VK_B:
+						timer.schedule(tsk, 0, 1000);
+						repaint();
 						break;
-				case KeyEvent.VK_C:
-					console = new MyConsole();
-					//console.run();
-					break;
+					case KeyEvent.VK_E:
+						timer.cancel();
+						active = false;
+						for(int i = 1; i <= devs_mp.size(); i++) {
+							System.out.println("Разработчик "+ i +", время рождения: " +
+									devs_mp.get(i));
+						}
+						for(int i = 1; i <= manags_mp.size(); i++) {
+							System.out.println("Менеджер "+ i + ", время рождения: " +
+									manags_mp.get(i));
+						}
+						repaint();
+						break;
+					case KeyEvent.VK_T:
+						timerhidden = !timerhidden;
+						repaint();
+						break;
+					case KeyEvent.VK_S:
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+							repaint();
+							break;
+					case KeyEvent.VK_C:
+						console = new MyConsole();
+						break;
+					case KeyEvent.VK_Z:
+						try {
+							for(Developer dev : devs)
+								oosdev.writeObject(dev);
+							oosdev.close();
+							for(Manager man : manags)
+								oosman.writeObject(man);
+							oosdev.close();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						break;
+					case KeyEvent.VK_X:
+						try {
+							JFrame frame = new JFrame();
+							jfc.showOpenDialog(frame);
+							oisdev = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
+							jfc.showOpenDialog(frame);
+							oisman = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						try {
+							while(oisdev.available() > 0)
+								devs.add((Developer) oisdev.readObject());
+							oisdev.close();
+							while(oisman.available() > 0)
+								manags.add((Manager) oisman.readObject());
+							oisman.close();
+						} catch(IOException el) {
+							el.printStackTrace();
+						} catch (ClassNotFoundException e1) {
+							e1.printStackTrace();
+						}
 				}
 			}
 		};
@@ -117,7 +157,7 @@ public class Habitat extends Applet{
 		Init();
 	}
 	
-	public Habitat(boolean via_frm) {
+	public Habitat(boolean via_frm) throws IOException {
 		run_via_frm = via_frm;
 		Init();
 	}
@@ -215,8 +255,8 @@ public class Habitat extends Applet{
 			}
 		} else {
 			String str = "Время симуляции: " + time;
-			String dcount="Разработчиков создано: " + devs.size();
-			String mcount="Менеджеров создано: " + manags.size();
+			String dcount = "Разработчиков создано: " + devs.size();
+			String mcount = "Менеджеров создано: " + manags.size();
 			offScreenGraphics.setColor(Color.GREEN);
 			offScreenGraphics.setFont(new Font("Helvetica", Font.ITALIC, 22));
 			offScreenGraphics.drawString(str, 15, 25);
@@ -226,6 +266,20 @@ public class Habitat extends Applet{
 			offScreenGraphics.setColor(Color.BLUE);
 			offScreenGraphics.setFont(new Font("TimesRoman", Font.PLAIN, 14));
 			offScreenGraphics.drawString(mcount, 15, 65);
+			try {
+				fw.write(str + "\n");
+				fw.write(dcount + "\n");
+				fw.write(mcount + "\n");
+				fw.write("Период времени создания разработчика: " + n1 + " сек.\n");
+				fw.write("Период времени создания менеджера: " + n2 + " сек.\n");
+				fw.write("Вероятность создания разработчика: " + p/100 + "\n");
+				fw.write("Процент менеджеров: " + k + "%\n");
+				fw.write("Скорость движения объектов: " + speed + "\n");
+				fw.close();
+				System.out.println("Запись в файл проведена успешно.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			devs.clear();
 			manags.clear();
 		}
