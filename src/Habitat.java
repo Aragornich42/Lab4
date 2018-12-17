@@ -55,6 +55,8 @@ public class Habitat extends Applet{
 		private boolean first_rn = true;
 		private long start_tm = 0;
 		private long end_tm = 0;
+		private boolean pause_flag = false;
+		private long stop_tm;
 		
 		Task(Habitat exmpl) {
 			hbt = exmpl;
@@ -66,11 +68,23 @@ public class Habitat extends Applet{
 				end_tm = start_tm;
 				first_rn = false;
 			}
-			long current_tm = System.currentTimeMillis();
-			double elapsed = (current_tm - start_tm) / 1000.0;
-			double frame_tm = (end_tm - start_tm) / 1000.0;
-			hbt.Update(elapsed);
-			end_tm = current_tm;
+			if(!pause_flag) {
+				long current_tm = System.currentTimeMillis();
+				double elapsed = (current_tm - start_tm) / 1000.0;
+				double frame_tm = (end_tm - start_tm) / 1000.0;
+				hbt.Update(elapsed);
+				end_tm = current_tm;
+			}
+		}
+
+		public void Stop() {
+			stop_tm = end_tm;
+			pause_flag = true;
+		}
+
+		public void Start() {
+			start_tm += System.currentTimeMillis() - stop_tm;
+			pause_flag = false;
 		}
 	}
 	
@@ -116,6 +130,7 @@ public class Habitat extends Applet{
 						console = new MyConsole();
 						break;
 					case KeyEvent.VK_Z:
+						tsk.Stop();
 						try {
 							jfc.showOpenDialog(frame);
 							devSer = jfc.getSelectedFile();
@@ -130,8 +145,10 @@ public class Habitat extends Applet{
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
+						tsk.Start();
 						break;
 					case KeyEvent.VK_X:
+						tsk.Stop();
 						try {
 							jfc.showOpenDialog(frame);
 							oisdev = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
@@ -150,6 +167,7 @@ public class Habitat extends Applet{
 						} catch (ClassNotFoundException e1) {
 							e1.printStackTrace();
 						}
+						tsk.Start();
 						break;
 				}
 			}
