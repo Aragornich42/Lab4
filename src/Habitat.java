@@ -5,11 +5,13 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.SocketHandler;
 import java.util.regex.Pattern;
 
 public class Habitat extends Applet{
@@ -49,6 +51,9 @@ public class Habitat extends Applet{
     private ObjectInputStream oisman;
 	private JFileChooser jfc = new JFileChooser();
     private JFrame frame = new JFrame();
+    private Socket socket = new Socket("localhost", 8080);
+    private DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+    private DataInputStream dis = new DataInputStream(socket.getInputStream());
 
 	private class Task extends TimerTask {
 		private Habitat hbt;
@@ -222,6 +227,34 @@ public class Habitat extends Applet{
             }
         }
 
+        int command = 0;
+        try {
+            if (dis.available() > 0) {
+                command = dis.readInt();
+                if (command == 1) {
+                    int sized = devs.size();
+                    int sizem = manags.size();
+                    dos.writeInt(sized);
+                    dos.writeInt(sizem);
+                    devs.clear();
+                    manags.clear();
+                    for (int i = 0; i < sized; i++)
+                        manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
+                    for (int i = 0; i < sizem; i++)
+                        devs.add(new Developer(rnd.nextInt(800), rnd.nextInt(500), speed));
+                    dos.writeInt(devs.size());
+                    dos.writeInt(manags.size());
+                } else {
+                    socket.close();
+                    socket = new Socket("localhost", 8080);
+                    dos = new DataOutputStream(socket.getOutputStream());
+                    dis = new DataInputStream(socket.getInputStream());
+                }
+            }
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+
 		this.repaint();
 		Toolkit.getDefaultToolkit().sync();
 	}
@@ -304,6 +337,13 @@ public class Habitat extends Applet{
 			}
 			devs.clear();
 			manags.clear();
+            try {
+                dis.close();
+                dos.close();
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 		}
 		g.drawImage(off_scrn_img, 0, 0, this);
 	}
