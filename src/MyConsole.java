@@ -1,12 +1,11 @@
 import javax.swing.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.*;
+        import java.awt.event.KeyEvent;
+        import java.awt.event.KeyListener;
 
 public class MyConsole extends JFrame {
 
-    JTextArea area = new JTextArea( 28, 50);
-    JPanel panel = new JPanel();
+    JTextArea area = new JTextArea( 28, 50);  //Окно консоли
+    JPanel panel = new JPanel();  //Панель для элементов
 
     public MyConsole() {
         super("MyConsole");
@@ -15,6 +14,7 @@ public class MyConsole extends JFrame {
         setSize(600, 500);
         setVisible(true);
 
+        //Слушаем нажатие клавиши Enter
         area.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) { }

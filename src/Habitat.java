@@ -5,19 +5,20 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.SocketHandler;
 import java.util.regex.Pattern;
 
 public class Habitat extends Applet{
 	
 	private static final long serialVersionUID = 3463300763713951195L;
-	
+	//набор полей, обеспечивающих работу программы
 	private Timer timer = new Timer();
 	private double time = 0;
 	private Random rnd = new Random();
@@ -25,36 +26,35 @@ public class Habitat extends Applet{
 	private LinkedList<Manager> manags = new LinkedList<>();
 	private HashMap<Integer, Double> devs_mp = new HashMap<>();
 	private HashMap<Integer, Double> manags_mp = new HashMap<>();
-	private boolean run_via_frm = false;
-	private Image off_scrn_img;
+	private Image off_screen_img;
 	private boolean timerhidden = false;
 	private boolean active = true;
 	private Image dev_img;
 	private Image manag_img;
-	private int n1 = rnd.nextInt(5) + 5;
-	private int n2 = rnd.nextInt(3) + 7;
-	private int k = rnd.nextInt(9) + 1;
-	private int p = rnd.nextInt(40) + 60;
-	private int speed = rnd.nextInt(10) + 10;
+	private int n1 = rnd.nextInt(5) + 5;  //период генерации разработчика
+	private int n2 = rnd.nextInt(3) + 7;  //период генерации менеджера
+	private int k = rnd.nextInt(9) + 1;  //процент менеджеров
+	private int p = rnd.nextInt(40) + 60;  //вероятность генерации разработчика
+	private int speed = rnd.nextInt(10) + 10;  //"скорость" движения объектов
 	private int radius = rnd.nextInt(10) + 5;
-	private MyConsole console;
+	private MyConsole console;  //консоль
 	private String[] pars;
     private String info1 = "";
     private String info2 = "";
     private File f;
-    private FileWriter fw;
-    private File devSer;
-    private File manSer;
+    private FileWriter fw;  //для записи в файл в конце работы
+    private File devSer;  //для
+    private File manSer;  //сериализации
     private ObjectOutputStream oosdev;
     private ObjectOutputStream oosman;
     private ObjectInputStream oisdev;
     private ObjectInputStream oisman;
-	private JFileChooser jfc = new JFileChooser();
-    private JFrame frame = new JFrame();
-    private Socket socket = new Socket("localhost", 8080);
+	private JFileChooser jfc = new JFileChooser();  //выбор файлов
+    private JFrame frame = new JFrame();  //для ФайлЧузера
+    private Socket socket = new Socket("localhost", 8080);  //сокет
     private DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
     private DataInputStream dis = new DataInputStream(socket.getInputStream());
-
+	//вложенный класс
 	private class Task extends TimerTask {
 		private Habitat hbt;
 		private boolean first_rn = true;
@@ -66,7 +66,7 @@ public class Habitat extends Applet{
 		Task(Habitat exmpl) {
 			hbt = exmpl;
 		}
-		
+		//по сути, таймер
 		public void run() {
 			if (first_rn) {
 				start_tm = System.currentTimeMillis();
@@ -76,64 +76,73 @@ public class Habitat extends Applet{
 			if(!pause_flag) {
 				long current_tm = System.currentTimeMillis();
 				double elapsed = (current_tm - start_tm) / 1000.0;
-				double frame_tm = (end_tm - start_tm) / 1000.0;
 				hbt.Update(elapsed);
 				end_tm = current_tm;
 			}
 		}
-
+		//остановка приложения
 		public void Stop() {
 			stop_tm = end_tm;
 			pause_flag = true;
 		}
-
+		//запуск приложения
 		public void Start() {
 			start_tm += System.currentTimeMillis() - stop_tm;
 			pause_flag = false;
 		}
 	}
-	
+	//экземляр вложенного класса
 	private Task tsk = new Task(this);
-	
+
+	private String[] Parser(String cmd) {
+		return cmd.split(Pattern.quote("\n"));
+	}
+
 	public Habitat() throws IOException {
 		KeyAdapter pk;
 		pk = new KeyAdapter() {
 			public void keyPressed(KeyEvent e) {
 				int keyCode = e.getKeyCode();
 				System.out.println(e);
-				switch(keyCode) {
+				switch (keyCode) {
+					//запуск симуляции
 					case KeyEvent.VK_B:
 						timer.schedule(tsk, 0, 1000);
 						repaint();
 						break;
+						//прекращение симуляции
 					case KeyEvent.VK_E:
 						timer.cancel();
 						active = false;
-						for(int i = 1; i <= devs_mp.size(); i++) {
-							System.out.println("Разработчик "+ i +", время рождения: " +
+						for (int i = 1; i <= devs_mp.size(); i++) {
+							System.out.println("Разработчик " + i + ", время рождения: " +
 									devs_mp.get(i));
 						}
-						for(int i = 1; i <= manags_mp.size(); i++) {
-							System.out.println("Менеджер "+ i + ", время рождения: " +
+						for (int i = 1; i <= manags_mp.size(); i++) {
+							System.out.println("Менеджер " + i + ", время рождения: " +
 									manags_mp.get(i));
 						}
 						repaint();
 						break;
+						//вывод таймера
 					case KeyEvent.VK_T:
 						timerhidden = !timerhidden;
 						repaint();
 						break;
+						//остановка приложения
 					case KeyEvent.VK_S:
 						try {
 							Thread.sleep(5000);
 						} catch (InterruptedException e1) {
 							e1.printStackTrace();
 						}
-							repaint();
-							break;
+						repaint();
+						break;
+						//вызов консоли
 					case KeyEvent.VK_C:
 						console = new MyConsole();
 						break;
+						//вызов сериализации
 					case KeyEvent.VK_Z:
 						tsk.Stop();
 						try {
@@ -152,6 +161,7 @@ public class Habitat extends Applet{
 						}
 						tsk.Start();
 						break;
+						//вызов десериализации
 					case KeyEvent.VK_X:
 						tsk.Stop();
 						try {
@@ -161,10 +171,10 @@ public class Habitat extends Applet{
 							oisman = new ObjectInputStream(new FileInputStream(jfc.getSelectedFile()));
 							LinkedList<Developer> devs2 = (LinkedList<Developer>) oisdev.readObject();
 							LinkedList<Manager> mans2 = (LinkedList<Manager>) oisman.readObject();
-							for(Developer dev : devs2)
+							for (Developer dev : devs2)
 								devs.add(dev);
 							oisdev.close();
-							for(Manager man : mans2)
+							for (Manager man : mans2)
 								manags.add(man);
 							oisman.close();
 						} catch (IOException e1) {
@@ -178,23 +188,15 @@ public class Habitat extends Applet{
 			}
 		};
 		this.addKeyListener(pk);
-		Init();
 	}
-	
-	public Habitat(boolean via_frm) throws IOException {
-		run_via_frm = via_frm;
-		Init();
-	}
-	
+	//основной метод программы
 	private void Update(double elapsed_tm) {
 		time = elapsed_tm;
 		int tim = (int)elapsed_tm;
 		float p1 = rnd.nextInt(100);
 		boolean bool = false;
 		String[] cmd2;
-		
-		
-		
+		//генерация разработчиков
 		if(tim % n1 == 0 && p1 <= p) {
 			devs.add(new Developer(rnd.nextInt(800), rnd.nextInt(500), speed));
 			devs_mp.put(devs.size(), time);
@@ -203,13 +205,14 @@ public class Habitat extends Applet{
 			else
 				bool = false;
 		}
-		
+		//генерация менеджеров
 		if(tim % n2 == 0 && bool) {
 			manags.add(new Manager(rnd.nextInt(800), rnd.nextInt(500), radius, speed));
 			manags_mp.put(manags.size(), time);
 		}
-
+		//работа с консолью
 		if(console != null) {
+			//тут костыли, следовало бы их убрать перед релизом.
             info1 = console.getCurinfo();
             if(!info1.equals(info2)) {
                 pars = Parser(info1);
@@ -226,7 +229,7 @@ public class Habitat extends Applet{
                 info2 = info1;
             }
         }
-
+		//работа с сервером
         int command = 0;
         try {
             if (dis.available() > 0) {
@@ -245,38 +248,32 @@ public class Habitat extends Applet{
                     dos.writeInt(devs.size());
                     dos.writeInt(manags.size());
                 } else {
+                	Thread.sleep(500);
+					DatagramSocket ds = new DatagramSocket(3333);
+					DatagramPacket pack = new DatagramPacket(new byte[1], 1);
+					ds.receive(pack);
+					System.out.println(pack.getData());
                     socket.close();
                     socket = new Socket("localhost", 8080);
                     dos = new DataOutputStream(socket.getOutputStream());
                     dis = new DataInputStream(socket.getInputStream());
                 }
             }
-            } catch(IOException e){
-                e.printStackTrace();
-            }
-
+        } catch(IOException e){
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		//перерисовка объектов
 		this.repaint();
 		Toolkit.getDefaultToolkit().sync();
 	}
-	
-	public void init() {
-		resize(1300, 650);
-		try {
-			dev_img = ImageIO.read(this.getClass().getResource("1.png"));
-			manag_img = ImageIO.read(this.getClass().getResource("2.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println(n1 + " " + n2 + " " + k + " " + p);
-	}
-	
-	private void Init() {	}
-	
+	//рисование объектов
 	public void paint(Graphics g) {
 		int width = getSize().width;
 		int height = getSize().height;
-		off_scrn_img = createImage(width, height);
-		Graphics offScreenGraphics = off_scrn_img.getGraphics();
+		off_screen_img = createImage(width, height);
+		Graphics offScreenGraphics = off_screen_img.getGraphics();
 		
 		if(active) {
 			offScreenGraphics.setColor(Color.WHITE);
@@ -345,15 +342,22 @@ public class Habitat extends Applet{
                 e.printStackTrace();
             }
 		}
-		g.drawImage(off_scrn_img, 0, 0, this);
+		g.drawImage(off_screen_img, 0, 0, this);
 	}
-	
+	//инициализация
+	public void init() {
+		resize(1300, 650);
+		try {
+			dev_img = ImageIO.read(this.getClass().getResource("1.png"));
+			manag_img = ImageIO.read(this.getClass().getResource("2.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println(n1 + " " + n2 + " " + k + " " + p);
+	}
+	//обновление
 	public void update(Graphics g) {
 		paint(g);
 	}
-
-	private String[] Parser(String cmd) {
-	    return cmd.split(Pattern.quote("\n"));
-    }
 
 }
